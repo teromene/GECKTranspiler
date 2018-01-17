@@ -44,7 +44,7 @@ class Token :
 		self.valArr = valArr
 
 	def __repr__(self) :
-		return self.tokenType + " " + (self.val1 if self.val1 != None else "") + " " + (self.val2 if self.val2 != None else "") + "\n"
+		return self.tokenType + " " + ((" " + self.val1) if self.val1 != None else "")  + (self.val2 if self.val2 != None else "") + "\n"
 
 class Tokenizer:
 
@@ -80,7 +80,7 @@ class Tokenizer:
 				return
 
 			token = self.tokens[pos]
-			if token.tokenType == Token.TOKEN_FUNCALL and ((token.val2 == None and token.val1 in self.variableList) or (token.val1 + "." + str(token.val2)) in self.variableList):
+			if token.tokenType == Token.TOKEN_FUNCALL and ((token.val2 in self.variableList) or (str(token.val1) + "." + str(token.val2) in self.variableList)):
 				self.rewroteCount += 1
 				token.tokenType = Token.TOKEN_VAR
 				self.tokens.pop(pos + 1)
@@ -94,12 +94,13 @@ class Tokenizer:
 
 				token = self.tokens[pos]
 
-				if token.tokenType == Token.TOKEN_FUNCALL and ( not (token.val2 != None and token.val2.lower() in self.functionList) and token.val1.lower() not in self.functionList):
+				if token.tokenType == Token.TOKEN_FUNCALL and (token.val2.lower() not in self.functionList):
 					if self.tokens[pos + 2].tokenType == Token.TOKEN_FUNPARAMLISTEND:
 						self.rewroteCount += 1
 						token.tokenType = Token.TOKEN_VAR
 						self.tokens.pop(pos + 1)
 						self.tokens.pop(pos + 1)
+						pass
 			
 	def parseLine(self):
 		if self.readNoEat(1) == ";" :
@@ -240,32 +241,24 @@ class Tokenizer:
 					if token in self.variableList:
 						self.tokens.append(Token(Token.TOKEN_VAR, token))
 					else:
+						#Never seen a more-than-one dotted funcall/varcall
 						if "." in token:
-							#Never seen a more-than-one dotted funcall/varcall
 							target = token.split(".")[0]
 							function = token.split(".")[1]
-							if contextSetCall != 1:
-								self.tokens.append(Token(Token.TOKEN_FUNCALL, target, function))
-								self.tokens.append(Token(Token.TOKEN_FUNPARAMLISTSTART))
-								self.tokens.append(Token(Token.TOKEN_FUNPARAMSTART))
-								contextFunParam = True
-								contextFunctionCall = True
-							else:
-								if token not in self.variableList:
-									self.variableList.append(token)
-								self.tokens.append(Token(Token.TOKEN_SETCALLVAR, target, function))
 						else:
-							if contextSetCall != 1:
-								self.tokens.append(Token(Token.TOKEN_FUNCALL, token))
-								self.tokens.append(Token(Token.TOKEN_FUNPARAMLISTSTART))
-								self.tokens.append(Token(Token.TOKEN_FUNPARAMSTART))
-								contextFunParam = True
-								contextFunctionCall = True
-							else:
-								if token not in self.variableList:
-									self.variableList.append(token)
-								self.tokens.append(Token(Token.TOKEN_SETCALLVAR, token))
-
+							target = None
+							function = token
+							
+						if contextSetCall != 1:
+							self.tokens.append(Token(Token.TOKEN_FUNCALL, target, function))
+							self.tokens.append(Token(Token.TOKEN_FUNPARAMLISTSTART))
+							self.tokens.append(Token(Token.TOKEN_FUNPARAMSTART))
+							contextFunParam = True
+							contextFunctionCall = True
+						else:
+							if token not in self.variableList:
+								self.variableList.append(token)
+							self.tokens.append(Token(Token.TOKEN_SETCALLVAR, target, function))
 				else:
 					self.tokens.append(Token(Token.TOKEN_VAR, token))
 					if token not in self.variableList:

@@ -1,4 +1,5 @@
 from tokenizer import Token
+from translator import Translator
 #Very basic rewriter, cannot even do symbol collection
 class GECKFunction:
 	target = None
@@ -16,6 +17,11 @@ class GECKFunction:
 	def nextParam(self):
 		pass
 	
+	def writeFunction(self):
+		print(self.target, self.functionName, self.argList)
+		#Call the translator on this, and collect the vartypes output
+		translator = Translator(self)
+		
 #Used to check typing, especially of REFS
 class GECKCondition:
 	leftOperand = None
@@ -44,6 +50,7 @@ class ScriptWriter:
 
 	def run(self):
 		self.indentLevel = 0
+		currentFunction = None
 		for token in self.tokens:
 			if token.tokenType == Token.TOKEN_SCRIPTNAME:
 				self.writeLine("Scriptname " + token.val1 + "\n")
@@ -90,18 +97,20 @@ class ScriptWriter:
 			elif token.tokenType in [Token.TOKEN_RELOP, Token.TOKEN_NUMOP, Token.TOKEN_MATHOP, Token.TOKEN_LOGICOP]:
 				self.writeLine(token.val1 + " ")
 			elif token.tokenType == Token.TOKEN_FUNCALL:
-				if token.val2 == None:
-					self.writeLine(token.val1)
+				if token.val1 == None:
+					self.writeLine(token.val2)
 				else:
 					self.writeLine(token.val1 + "." + token.val2)
+				currentFunction = GECKFunction(token.val1, token.val2)
 			elif token.tokenType == Token.TOKEN_FUNPARAMLISTSTART:
 				self.writeLine("(")
 			elif token.tokenType == Token.TOKEN_FUNPARAMLISTEND:
 				self.removeLastCharEquals(" ")
 				self.removeLastCharEquals(",")
+				currentFunction.writeFunction()
 				self.writeLine(") ")
 			elif token.tokenType == Token.TOKEN_FUNPARAMSTART:
-				pass
+				currentFunction.nextParam()
 			elif token.tokenType == Token.TOKEN_FUNPARAMEND:
 				self.removeLastCharEquals(" ")
 				self.writeLine(", ")
