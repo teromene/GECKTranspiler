@@ -1,0 +1,716 @@
+scn FFERepeatASCRIPT
+
+; references to encounter markers
+; what these mean vary by the encounter
+ref marker1
+ref marker2
+ref marker3
+ref marker4
+ref marker5
+
+; temp refs used during creation of the encounters
+ref tempRef1
+ref tempRef2
+ref tempRef3
+ref tempRef4
+ref tempRef5
+
+; special handling
+ref dismemberRef			; set to have quest script kill and dismember an actor randomly
+
+; these are set by the trigger zone:
+short doTrigger								; set to 1 to begin process of triggering an encounter
+short encounterSet						; group encounters that can happen in each location
+												
+; used in picking the random encounter
+short dieRoll			; random die roll
+
+
+; what encounter are we triggering?
+short encounterNumber					; this is the stage to trigger
+
+; 
+; ************repeat encounter variables **********
+
+; Encounter 1
+
+
+; Encounter 2
+
+
+; Encounter 5
+short enc5brahminDead			; set to 1 if player kills pack brahmin
+
+; Encounter 8
+short enc8preyDead			; set to 1 when prey has been killed
+short enc8preyType			; what kind of prey are the hunters after?
+									; 0 = ant
+									; 1 = dog
+									; 2 = mirelurk
+									; 3 = mole rat
+									; 4 = yao guai
+
+; Encounter 10
+short enc10eyebotDead		; set to 1 when eyebot has been killed
+
+; Encounter 11
+short enc11scene 				; set to 1 to end NPC conversation around eyebot
+
+; Encounter 13
+short enc13scene				; set to 1 to start NPC conversation
+
+; Encounter 14
+short enc14repeat 			; set to 1 for repeat encounters with ghouls
+
+; Encounter 15
+short enc15brahminDead 	; set to 1 when brahmin dies
+
+; Encounter 16
+short enc16scene				; set to 1 to start NPCs on normal sandbox
+
+; Encounter 23
+short enc23endcombat		; set to 1 when NPC ends combat with molerat
+
+; Encounter 24
+short enc24endcombat		; set to 1 when NPC ends combat with molerat
+
+; Encounter 25
+short enc25endcombat		; set to 1 when NPC ends combat with molerat
+
+; Encounter 26
+short enc26freddie			; set to 1 when dead Freddie placed
+short enc26pepper			; set to 1 when dead Pepper placed
+short enc26gomez			; set to 1 when dead Officer Gomez placed
+short enc26done				; set to 1 to turn off this encounter
+
+begin gamemode
+	; ****************************************
+	; special handling
+	; ****************************************
+
+	; dismember somebody
+	if dismemberRef != 0
+		; randomly roll for part to dismember
+		; what body part to dismember? (0-10)
+		set dieRoll to GetRandomPercent * 11/100
+		; dismember them!
+		dismemberRef.kill dismemberRef dieRoll
+		; clear variable
+		set dismemberRef to 0
+	endif
+
+
+	; ****************************************
+	; Start Encounters
+	; ****************************************
+	if encounterNumber > 0
+		; NOTE: Repeatable encounters increment FFERepeatACount in the trigger script
+		; -- this allows repeatable quests to be reset even if there are some unused ones (because of conditions)
+
+		; get the current encounter markers from FFETrigger quest (set by the trigger zone)
+		set marker1 to FFETrigger.marker1
+		set marker2 to FFETrigger.marker2
+		set marker3 to FFETrigger.marker3
+		set marker4 to FFETrigger.marker4
+		set marker5 to FFETrigger.marker5
+
+		; fail if these markers don't exist
+		if marker1 == 0 || marker2 == 0 || marker3 == 0 || marker4 == 0 || marker5 == 0
+			; clear encounter number
+			set encounterNumber to 0
+		endif
+			
+		; *********************************************************************
+		; encounter set A -- clustered encounters
+		; *********************************************************************
+		if encounterNumber == 1
+			; ants versus radScorpion
+			; move guard marker
+			FFER01Marker1.moveto marker1
+			; place radscorpion
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER01Radscorpion
+			; place 1-4 ants
+			set dieRoll to GetRandomPercent * 4/100 + 1
+			set tempRef2 to marker2.placeLeveledActorAtMe LvlAnt
+			tempRef2.startcombat tempRef1
+			if dieRoll >=2
+				set tempRef2 to marker3.placeLeveledActorAtMe LvlAnt
+				tempRef2.startcombat tempRef1
+			endif
+			if dieRoll >=3
+				set tempRef2 to marker4.placeLeveledActorAtMe LvlAnt
+				tempRef2.startcombat tempRef1
+			endif
+			if dieRoll >=4
+				set tempRef2 to marker5.placeLeveledActorAtMe LvlAnt
+				tempRef2.startcombat tempRef1
+			endif
+
+		elseif encounterNumber == 2
+			; ants gather around toxic waste barrel
+			marker1.placeatme BarrelToxicWaste02
+			FFER02MarkerRef.moveto marker1
+			; place 1-3 ants
+			set dieRoll to GetRandomPercent * 3/100 + 1
+			marker2.placeLeveledActorAtMe FFER02Ant
+			marker3.placeLeveledActorAtMe LvlAnt
+			if dieRoll > 1
+				marker4.placeLeveledActorAtMe LvlAnt
+			endif
+			if dieRoll > 2
+				marker5.placeLeveledActorAtMe LvlAnt
+			endif
+
+		elseif encounterNumber == 3
+			; radscorpions kill traveller
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER03NPC1
+			; place 1-3 radscorpions
+			set dieRoll to GetRandomPercent * 3/100 + 1
+			set tempRef2 to marker2.placeLeveledActorAtMe LvlRadScorpion
+			tempRef2.startCombat tempRef1
+			if dieRoll > 1
+				set tempRef3 to marker3.placeLeveledActorAtMe LvlRadScorpion
+				tempRef3.startCombat tempRef1
+			endif
+			if dieRoll > 2
+				set tempRef4 to marker4.placeLeveledActorAtMe LvlRadScorpion
+				tempRef4.startCombat tempRef1
+			endif
+
+		elseif encounterNumber == 4
+			; place NPC
+			set dismemberRef to marker1.placeLeveledActorAtMe FFER04NPC1
+			; what body part to dismember? (0-13)
+			set dieRoll to GetRandomPercent * 14/100
+			; kill him
+			dismemberRef.kill dismemberRef dieRoll
+			; add food to inventory
+			dismemberRef.additem FFER04FoodList 1
+			; move guard marker
+			FFER04Marker1.moveto marker1
+			; place from 2-5 roaches
+			set dieRoll to GetRandomPercent * 4/100 + 2
+			marker2.placeLeveledActorAtMe FFER04Radroach
+			marker3.placeLeveledActorAtMe FFER04Radroach
+			if dieRoll > 2
+				marker4.placeLeveledActorAtMe FFER04Radroach
+			endif
+			if dieRoll > 3
+				marker5.placeLeveledActorAtMe FFER04Radroach
+			endif
+			if dieRoll > 4
+				marker2.placeLeveledActorAtMe FFER04Radroach
+			endif
+
+		elseif encounterNumber == 5
+			; scavenger in his camp
+			; clear vars
+			set enc5brahminDead to 0
+			set tempRef1 to marker2.placeLeveledActorAtMe FFER05NPC1 2 ; hard
+			; reset loot chest inventory
+			FFER05LootBoxREF.ResetInventory
+			; place pack brahmin
+			set tempRef2 to marker3.placeLeveledActorAtMe FFER05Brahmin
+			; set ownership
+			tempRef2.SetOwnership WastelandScavengerFaction
+			; create the camp
+			marker4.placeatme FloorSleepL
+			marker5.placeatme FloorSitMarker
+			marker1.placeatme Barrel02FireAnimStatic256
+			marker2.placeatme DefaultFireBarrelIdleMarker
+			; set merchant chest
+			tempRef1.SetMerchantContainer FFER05LootBoxREF
+
+			; give me a pet
+			set dieRoll to GetRandomPercent
+			if dieRoll > FFEScavengerDogChance
+				; pet bear
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER05YaoGuai
+			else
+				; pet dog
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER05Dog
+			endif
+			; set ownership so pet reacts properly
+			tempRef3.SetOwnership WastelandScavengerFaction
+
+		elseif encounterNumber == 6
+			; wasteland doctor
+			marker1.placeLeveledActorAtMe FFER06NPC1 2 ; hard
+
+		elseif encounterNumber == 7
+			; pack of dogs guarding a body
+			; move marker
+			FFER07Marker1.moveto marker1
+			; dead guy
+			set tempRef1 to marker1.PlaceLeveledActorAtMe FFER07DeadGuy 0
+			tempRef1.kill
+			set dismemberRef to tempRef1 ; randomly dismember him for extra yumminess
+			; dogs -- place 2-5 dogs, some hurt
+			set dieRoll to GetRandomPercent * 4/100 + 2
+			marker2.placeLeveledActorAtMe FFER07Dog
+			set tempRef1 to marker3.placeLeveledActorAtMe FFER07Dog
+			; cripple a limb
+			tempRef1.modav rightAttackCondition -100
+			if dieRoll > 2
+				set tempRef1 to marker4.placeLeveledActorAtMe FFER07Dog
+				if dieRoll > 4
+					tempRef1.kill
+				endif
+			endif
+			if dieRoll > 3
+				set tempRef1 to marker5.placeLeveledActorAtMe FFER07Dog
+			endif
+			if dieRoll > 4
+				set tempRef1 to marker5.placeLeveledActorAtMe FFER07Dog
+				; cripple a limb
+				tempRef1.modav rightAttackCondition -100
+			endif
+
+		elseif encounterNumber == 8 || encounterNumber == 9
+			; hunters
+			; clear vars
+			set enc8preyDead to 0
+			set enc8preyType to -1
+			; move marker
+			FFER08Marker1.moveto marker1
+			; prey
+			set tempRef1 to marker1.PlaceLeveledActorAtMe FFER08Prey 0
+			; prey type?
+			if tempRef1.GetInFaction antFaction == 1
+				set enc8preyType to 0
+			elseif tempRef1.GetInFaction dogFaction == 1
+				set enc8preyType to 1
+			elseif tempRef1.GetInFaction mirelurkFaction == 1
+				set enc8preyType to 2
+			elseif tempRef1.GetInFaction moleratFaction == 1
+				set enc8preyType to 3
+			elseif tempRef1.GetInFaction yaoGuaiFaction == 1
+				set enc8preyType to 4
+			endif
+
+			; hunters -- place 1-3 hunters, remove prey type of meat from them so they'll find properly
+			set dieRoll to GetRandomPercent * 3/100 + 1
+			set tempRef2 to marker2.placeLeveledActorAtMe FFER08Hunter
+			if enc8preyType == 0
+				tempRef2.removeItem antMeat 20
+			elseif enc8preyType == 1
+				tempRef2.removeItem dogMeat 20
+			elseif enc8preyType == 2
+				tempRef2.removeItem mirelurkMeat 20
+			elseif enc8preyType == 3
+				tempRef2.removeItem moleratMeat 20
+			elseif enc8preyType == 4
+				tempRef2.removeItem yaoGuaiMeat 20
+			endif
+			if dieRoll > 1
+				set tempRef2 to marker3.placeLeveledActorAtMe FFER08Hunter
+				if enc8preyType == 0
+					tempRef2.removeItem antMeat 20
+				elseif enc8preyType == 1
+					tempRef2.removeItem dogMeat 20
+				elseif enc8preyType == 2
+					tempRef2.removeItem mirelurkMeat 20
+				elseif enc8preyType == 3
+					tempRef2.removeItem moleratMeat 20
+				elseif enc8preyType == 4
+					tempRef2.removeItem yaoGuaiMeat 20
+				endif
+			endif
+			if dieRoll > 2
+				set tempRef2 to marker4.placeLeveledActorAtMe FFER08Hunter
+				if enc8preyType == 0
+					tempRef2.removeItem antMeat 20
+				elseif enc8preyType == 1
+					tempRef2.removeItem dogMeat 20
+				elseif enc8preyType == 2
+					tempRef2.removeItem mirelurkMeat 20
+				elseif enc8preyType == 3
+					tempRef2.removeItem moleratMeat 20
+				elseif enc8preyType == 4
+					tempRef2.removeItem yaoGuaiMeat 20
+				endif
+			endif
+
+		elseif encounterNumber == 10
+			; Enclave eyebot being salvaged by scavenger
+			; clear vars
+			set enc10eyebotDead to 0
+			; move marker
+			FFER10Marker1.moveto marker1
+			; create robot
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER10Robot 0
+			tempRef1.addToFaction WastelandScavengerEnemyFaction 0	; make him an enemy of the scavenger
+			; create scavenger
+			marker2.placeLeveledActorAtMe FFER10NPC1 0
+
+			; give me a pet
+			set dieRoll to GetRandomPercent
+			if dieRoll > FFEScavengerDogChance
+				; pet bear
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER10YaoGuai
+			else
+				; pet dog
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER10Dog
+			endif
+			; set ownership so pet reacts properly
+			tempRef3.SetOwnership WastelandScavengerFaction
+
+			
+		elseif encounterNumber == 11
+			; people listening to eyebot
+			; reset variable
+			set enc11scene to 0
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER11Eyebot 0
+			; move marker
+			FFER11Marker1.moveto marker1
+			; place NPCs
+			set tempRef2 to marker2.placeLeveledActorAtMe FFER11Settler 0
+			set tempRef3 to marker3.placeLeveledActorAtMe FFER11Settler 0
+			; make them look at eyebot
+			tempRef2.look tempRef1
+			tempRef3.look tempRef1
+
+		elseif encounterNumber == 12
+			; dead guy
+			; roll against luck to find fatman
+			set dieRoll to GetRandomPercent/10 + 1
+			if dieRoll < player.getav luck
+				set dismemberRef to marker1.placeatme FFER12NPCFatman
+			else
+				set dismemberRef to marker1.placeatme FFER12NPCNormal
+			endif
+			dismemberRef.kill
+			marker1.placeatme FakeForceBall1000					; to give a havok push to the body to toss it around
+	
+		elseif encounterNumber == 13
+			; minefield
+			; place mines: 3-5
+			set dieRoll to GetRandomPercent * 3/100 + 3
+			marker1.placeatme MineFragProjectile
+			marker4.placeatme MineFragProjectile
+			marker5.placeatme MineFragProjectile
+			if dieRoll > 3
+				marker2.placeatme MineFragProjectile
+			endif
+			if dieRoll > 4
+				marker3.placeatme MineFragProjectile
+			endif
+
+		elseif encounterNumber == 14
+			; MS12 Post Quest: Angry Ghouls
+			; move marker
+			FFER14Marker1.moveto marker1
+			; place sit/sleep markers
+			marker5.placeatme FloorSitMarker
+			; place ghouls: 2-4
+			set dieRoll to GetRandomPercent * 3/100 + 2
+			set tempref1 to marker2.placeLeveledActorAtMe FFER14Ghoul
+			marker3.placeLeveledActorAtMe FFER14Ghoul
+			if dieRoll > 2
+				marker3.placeLeveledActorAtMe FFER14Ghoul
+			endif
+			if dieRoll > 3
+				marker4.placeLeveledActorAtMe FFER14Ghoul
+			endif
+			; give ghouls notes depending on variables in MS12
+			if MS12.allGhoulsDead == 0
+				tempref1.additem MS12RandomQuestNoteA 1
+			elseif MS12.allGhoulsDead == 1
+				tempref1.additem MS12RandomQuestNoteB 1
+			endif
+
+		elseif encounterNumber == 15
+
+			; MS05 -- Nuka Quantum merchant + brahmin (maybe)
+			; clear vars
+			set enc15brahminDead to 0
+			set tempRef1 to marker2.placeLeveledActorAtMe FFER15NPC1 2 ; hard
+			; add nuka quantum to inventory
+			tempRef1.additem MS05NukaColaQtm 1
+			; place pack brahmin -- 50% chance
+			if GetRandomPercent >= 50
+				set tempRef2 to marker3.placeLeveledActorAtMe FFER15Brahmin
+				; reset loot chest inventory
+				FFER15LootBoxREF.ResetInventory
+				; set ownership
+				tempRef2.SetOwnership WastelandScavengerFaction
+				; set merchant chest
+				tempRef1.SetMerchantContainer FFER15LootBoxREF
+
+			endif
+			; create the camp
+			FFER15Marker1.moveto marker1	; central package marker
+			FFER15Marker2.moveto marker3	; brahim marker
+			marker4.placeatme FloorSleepL
+			marker5.placeatme FloorSitMarker
+
+			; give me a pet
+			set dieRoll to GetRandomPercent
+			if dieRoll > FFEScavengerDogChance
+				; pet bear
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER15YaoGuai
+			else
+				; pet dog
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER15Dog
+			endif
+			; set ownership so pet reacts properly
+			tempRef3.SetOwnership WastelandScavengerFaction
+
+
+		elseif encounterNumber == 16
+			; MS10 Quest Encounter: Oasis Pilgrims
+			set enc16scene to 0
+			; move marker
+			FFER16Marker1.moveto marker1
+			; place leveled wastelanders: 2-4
+			set dieRoll to GetRandomPercent * 3/100 + 2
+			marker2.placeLeveledActorAtMe FFER16PilgrimTalker
+			marker3.placeLeveledActorAtMe FFER16Pilgrim
+			if dieRoll > 2
+				marker4.placeLeveledActorAtMe FFER16Pilgrim
+			endif
+			if dieRoll > 3
+				marker5.placeLeveledActorAtMe FFER16Pilgrim
+			endif
+			; place sit/sleep markers
+			marker2.placeatme FloorSitMarker
+			marker3.placeatme FloorSitMarker
+			marker4.placeatme DefaultSmokingIdleMarker
+
+		elseif encounterNumber == 17
+			; MS13 Post Quest: Hitmen attack player for being a Slaver
+			; place marker
+			FFER17Marker1.moveto marker1
+			; place hitmen: 2-4
+			set dieRoll to GetRandomPercent * 3/100 + 2
+			set tempRef1 to marker2.placeLeveledActorAtMe FFER17Hitman
+			set tempRef2 to marker3.placeLeveledActorAtMe FFER17Hitman
+			tempRef1.additem FFER17Note 1
+			tempRef2.additem FFER17Note 1
+			if dieRoll > 2
+				set tempRef3 to marker4.placeLeveledActorAtMe FFER17Hitman
+				tempRef3.additem FFER17Note 1
+			endif
+			if dieRoll > 3
+				set tempRef3 to marker5.placeLeveledActorAtMe FFER17Hitman
+				tempRef3.additem FFER17Note 1
+			endif
+
+		elseif encounterNumber == 18
+			; MS13 Post Quest: Slavers attack the player for being better than them
+			; make them neutral again
+			SetEnemy playerFaction FFER18SlaverFaction 1 1
+			; place marker
+			FFER18Marker1.moveto marker1
+			; place slavers: 2-5
+			set dieRoll to GetRandomPercent * 4/100 + 2
+			marker2.placeLeveledActorAtMe FFER18SlaverGreet
+			marker3.placeLeveledActorAtMe FFER18Slaver
+			if dieRoll > 2
+				marker4.placeLeveledActorAtMe FFER18Slaver
+			endif
+			if dieRoll > 3
+				marker5.placeLeveledActorAtMe FFER18Slaver
+			endif
+			if dieRoll > 4
+				marker1.placeLeveledActorAtMe FFER18Slaver
+			endif
+
+		elseif encounterNumber == 19
+			; supermutants with captives
+			FFER19Marker1.moveto marker1
+			; place 1-3 captives
+			set dieRoll to GetRandomPercent * 3/100 + 1
+			; place captives and markers
+			marker1.placeatme FFCaptiveMarker
+			marker1.placeLeveledActorAtMe FFER19SupermutantCaptive
+			if dieRoll > 1
+				marker2.placeatme FFCaptiveMarker
+				marker2.placeLeveledActorAtMe FFER19SupermutantCaptive
+			endif
+			if dieRoll > 2
+				marker3.placeatme FFCaptiveMarker
+				marker3.placeLeveledActorAtMe FFER19SupermutantCaptive
+			endif
+			; place 2-4 supermutant guards
+			set dieRoll to GetRandomPercent * 3/100 + 2
+			marker4.placeLeveledActorAtMe FFER19Supermutant
+			marker4.placeLeveledActorAtMe FFER19Supermutant
+			if dieRoll > 2
+				marker5.placeLeveledActorAtMe FFER19Supermutant
+			endif
+			if dieRoll > 3
+				marker5.placeLeveledActorAtMe FFER19Supermutant
+			endif
+
+		elseif encounterNumber == 20
+			; camped ghouls
+			FFER20Marker1.moveto marker1
+			marker1.placeatme Barrel02FireAnimStatic256
+			
+			; place 2-4 ghouls
+			set dieRoll to GetRandomPercent * 3/100 + 2
+			marker2.placeLeveledActorAtMe FFER20Ghoul
+			marker3.placeLeveledActorAtMe FFER20Ghoul
+			if dieRoll > 2
+				marker4.placeLeveledActorAtMe FFER20Ghoul
+			endif
+			if dieRoll > 3
+				marker5.placeLeveledActorAtMe FFER20Ghoul
+			endif
+			marker2.placeatme DefaultFireBarrelIdleMarker
+			marker3.placeatme FloorSitMarker
+			marker4.placeatme DefaultSmokingIdleMarker
+			marker5.placeatme FloorSitMarker
+
+		elseif encounterNumber == 21
+			; chem vendor in his camp
+			set tempRef1 to marker2.placeLeveledActorAtMe FFER21NPC1 0 ; easy
+			; create the camp
+			marker4.placeatme FloorSleepL
+			marker5.placeatme FloorSitMarker
+			marker1.placeatme Barrel02FireAnimStatic256
+			marker2.placeatme DefaultFireBarrelIdleMarker
+			marker3.placeatme DefaultSmokingIdleMarker
+
+		elseif encounterNumber == 22
+			; molerats attack wastelander
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER22NPC1
+			; place 2-5 molerats
+			set dieRoll to GetRandomPercent * 4/100 + 2
+			set tempRef2 to marker2.placeLeveledActorAtMe CrMoleRat
+			tempRef2.startCombat tempRef1
+			set tempRef2 to marker5.placeLeveledActorAtMe CrMoleRat
+			tempRef2.startCombat tempRef1
+
+			if dieRoll > 2
+				set tempRef3 to marker3.placeLeveledActorAtMe CrMoleRat
+				tempRef3.startCombat tempRef1
+			endif
+			if dieRoll > 3
+				set tempRef4 to marker3.placeLeveledActorAtMe CrMoleRat
+				tempRef4.startCombat tempRef1
+			endif
+			if dieRoll > 4
+				set tempRef5 to marker4.placeLeveledActorAtMe CrMoleRat
+				tempRef5.startCombat tempRef1
+			endif
+
+		elseif encounterNumber == 23
+			; MS03 -- bad survival guide
+			; molerat attacks poorly equipped wastelander
+
+			; clear var
+			set enc23endcombat to 0
+
+			; place wastelander
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER23NPC1
+			; damage his health
+			set dieRoll to tempRef1.getav health
+			set dieRoll to dieRoll/2
+			tempRef1.damageav health dieRoll
+
+			; place a molerat
+			set tempRef2 to marker2.placeLeveledActorAtMe CrMoleRat
+			tempRef2.startCombat tempRef1
+
+		elseif encounterNumber == 24
+			; MS03 -- medium survival guide
+			; molerat attacks moderately equipped wastelander
+
+			; clear var
+			set enc24endcombat to 0
+
+			; place wastelander
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER24NPC1
+			; place a molerat
+			set tempRef2 to marker2.placeLeveledActorAtMe CrMoleRat
+			; damage its health
+			set dieRoll to tempRef2.getav health
+			set dieRoll to dieRoll * .50
+			tempRef2.damageav health dieRoll
+			tempRef2.startCombat tempRef1
+
+		elseif encounterNumber == 25
+			; MS03 -- good survival guide
+			; mirelurk attacks well-equipped wastelander
+
+			; clear var
+			set enc25endcombat to 0
+
+			FFER25Marker1.moveto marker1
+
+			; place wastelander
+			set tempRef1 to marker1.placeLeveledActorAtMe FFER25NPC1
+			; place a mirelurk
+			set tempRef2 to marker2.placeLeveledActorAtMe CrMirelurk1
+			; damage its health
+			set dieRoll to tempRef2.getav health
+			set dieRoll to dieRoll * .75
+			tempRef2.damageav health dieRoll
+			tempRef2.startCombat tempRef1
+
+		elseif encounterNumber == 26
+			; MS16 -- dead vault 101 residents
+			set dismemberRef to 0
+			; place the named NPCs first, if they're not already dead
+			if enc26freddie == 0
+				set enc26freddie to 1
+				if FreddieGomezREF.getDead == 0
+					set dismemberRef to FreddieGomezREF
+					FreddieGomezREF.enable
+					FreddieGomezREF.moveto marker1
+				endif
+			elseif enc26pepper == 0
+				set enc26pepper to 1
+				if PepperGomezREF.getDead == 0
+					set dismemberRef to PepperGomezREF
+					PepperGomezREF.enable
+					PepperGomezREF.moveto marker1
+				endif
+			elseif enc26gomez == 0
+				set enc26gomez to 1 
+				if Vault101Security04REF.getDead == 0
+					set dismemberRef to Vault101Security04REF
+					Vault101Security04REF.enable
+					Vault101Security04REF.moveto marker1
+				endif
+			endif
+			if dismemberRef != 0
+				dismemberRef.kill
+				if GetRandomPercent >= 50
+					dismemberRef.additem WaterPurified 1
+				endif
+			endif
+			if GetRandomPercent >= 50
+				marker2.placeLeveledActorAtMe LvlWastelandAll 1
+			endif
+
+			if enc26gomez == 1 && enc26pepper == 1 && enc26freddie == 1
+				set enc26done to 1
+			endif
+
+		elseif encounterNumber == 27
+			; hit squad
+			FFER27Marker1.moveto marker1	
+			if player.Getav Karma <= KarmaEvil
+				; regulators
+				marker1.placeLeveledActorAtMe FFER27RegulatorLeader 2
+				marker2.placeLeveledActorAtMe FFER27Regulator01 1
+				marker3.placeLeveledActorAtMe FFER27Regulator02 1
+			elseif player.GetAV Karma >= KarmaGood
+				; talon co
+				marker1.placeLeveledActorAtMe FFER27TalonLeader 2
+				marker2.placeLeveledActorAtMe FFER27Talon01 1
+				marker3.placeLeveledActorAtMe FFER27Talon02 1
+
+			endif
+		; etc.
+
+		endif
+
+		; clear encounter number
+		set encounterNumber to 0
+	endif
+
+end
