@@ -5,7 +5,7 @@ class GECKFunction:
 	functionName = ""
 	argList = []
 
-	def __init__(self, target, functionName, argList = [])
+	def __init__(self, target, functionName, argList = []):
 		self.target = target
 		self.functionName = functionName
 		self.argList = argList
@@ -29,7 +29,8 @@ class GECKCondition:
 		pass
 		
 	def addToRight(self, token):
-	
+		pass
+		
 	def setLogicOp(self, token):
 		pass
 	
