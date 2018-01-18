@@ -4,28 +4,32 @@ from translator import Translator
 class GECKFunction:
 	target = None
 	functionName = ""
-	argList = []
 
 	def __init__(self, target, functionName, argList = []):
 		self.target = target
 		self.functionName = functionName
 		self.argList = argList
+		self.argList.append([])
+
 	
-	def addToParam(self):
-		pass
+	def addToParam(self, token):
+		self.argList[-1].append(token)
 		
 	def nextParam(self):
-		pass
+		self.argList.append([])
 	
 	def writeFunction(self):
-		print(self.target, self.functionName, self.argList)
+		#print(self.target, self.functionName, self.argList)
 		#Call the translator on this, and collect the vartypes output
 		translator = Translator(self)
-		
+		text, argType = translator.writeFunction()
+		return text
+
 #Used to check typing, especially of REFS
 class GECKCondition:
 	leftOperand = None
 	rightOperand = None
+
 	logicOp = None
 	
 	def __init__(self):
@@ -69,14 +73,14 @@ class ScriptWriter:
 				self.removeLastCharEquals(" ")
 				self.writeLine("", False, True)
 			elif token.tokenType == Token.TOKEN_VARINT:
-				self.writeLine("int " + token.val1 + " ")
+				self.writeLine("float " + token.val1 + " ")
 			elif token.tokenType == Token.TOKEN_VARREF:
 				self.writeLine("ObjectReference Property " + token.val1 + " ")
 			elif token.tokenType == Token.TOKEN_VAR:
-				if token.val2 != None:
+				if token.val1 != None:
 					self.writeLine(token.val1 + "." + token.val2 + " ")
 				else:
-					self.writeLine(token.val1 + " ")				
+					self.writeLine(token.val2 + " ")				
 			elif token.tokenType == Token.TOKEN_IFSTART:
 				self.writeLine("If ", True, False)
 			elif token.tokenType == Token.TOKEN_IFEND:
@@ -101,19 +105,22 @@ class ScriptWriter:
 					self.writeLine(token.val2)
 				else:
 					self.writeLine(token.val1 + "." + token.val2)
-				currentFunction = GECKFunction(token.val1, token.val2)
+				currentFunction = GECKFunction(token.val1, token.val2, [])
 			elif token.tokenType == Token.TOKEN_FUNPARAMLISTSTART:
 				self.writeLine("(")
 			elif token.tokenType == Token.TOKEN_FUNPARAMLISTEND:
 				self.removeLastCharEquals(" ")
 				self.removeLastCharEquals(",")
+				currentFunction.argList.pop(-1)
 				currentFunction.writeFunction()
+				currentFunction = None
 				self.writeLine(") ")
 			elif token.tokenType == Token.TOKEN_FUNPARAMSTART:
-				currentFunction.nextParam()
+				pass
 			elif token.tokenType == Token.TOKEN_FUNPARAMEND:
 				self.removeLastCharEquals(" ")
 				self.writeLine(", ")
+				currentFunction.nextParam()
 			elif token.tokenType == Token.TOKEN_BRACKETSTART:
 				self.writeLine("(")
 			elif token.tokenType == Token.TOKEN_BRACKETEND:
@@ -124,8 +131,8 @@ class ScriptWriter:
 			elif token.tokenType == Token.TOKEN_SETCALLEND:
 				pass
 			elif token.tokenType == Token.TOKEN_SETCALLVAR:
-				if token.val2 == None:
-					self.writeLine(token.val1 + " ")
+				if token.val1 == None:
+					self.writeLine(token.val2 + " ")
 				else:
 					self.writeLine(token.val1 + "." + token.val2 + " ")
 			elif token.tokenType == Token.TOKEN_SETCALLVALSTART:
@@ -136,7 +143,8 @@ class ScriptWriter:
 				print("ERR: Unknown token " + token.tokenType)
 				self.writeFile()
 				return
-
+			if currentFunction != None and token.tokenType not in [Token.TOKEN_FUNCALL, Token.TOKEN_FUNPARAMSTART, Token.TOKEN_FUNPARAMEND, Token.TOKEN_FUNPARAMLISTSTART, Token.TOKEN_FUNPARAMLISTEND]:
+				currentFunction.addToParam(token)
 		self.writeFile()
 
 	def writeFile(self):

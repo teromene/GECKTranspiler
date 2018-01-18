@@ -36,6 +36,7 @@ class Token :
 	TOKEN_SETCALLVAR = "TOKEN_SETCALLVAR"
 	TOKEN_SETCALLVALSTART = "TOKEN_SETCALLVALSTART"
 	TOKEN_SETCALLVALEND = "TOKEN_SETCALLVALEND"
+	TOKEN_CONST = "TOKEN_CONST"
 
 	def __init__(self, tokenType, val1 = None, val2 = None, valArr = []):
 		self.tokenType = tokenType
@@ -239,7 +240,13 @@ class Tokenizer:
 			else:
 				if not contextFunctionCall:
 					if token in self.variableList:
-						self.tokens.append(Token(Token.TOKEN_VAR, token))
+						if "." in token:
+							target = token.split(".")[0]
+							var = token.split(".")[1]
+						else:
+							target = None
+							var = token
+						self.tokens.append(Token(Token.TOKEN_VAR, target, var))
 					else:
 						#Never seen a more-than-one dotted funcall/varcall
 						if "." in token:
@@ -260,7 +267,13 @@ class Tokenizer:
 								self.variableList.append(token)
 							self.tokens.append(Token(Token.TOKEN_SETCALLVAR, target, function))
 				else:
-					self.tokens.append(Token(Token.TOKEN_VAR, token))
+					if "." in token:
+						target = token.split(".")[0]
+						var = token.split(".")[1]
+					else:
+						target = None
+						var = token
+					self.tokens.append(Token(Token.TOKEN_VAR, target, var))
 					if token not in self.variableList:
 						self.variableList.append(token)
 
